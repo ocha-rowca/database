@@ -8,4 +8,5 @@ class kf_categ extends Model
 {
     //
     protected $primaryKey = 'kfcateg_id';
+    public $incrementing = false;
 }

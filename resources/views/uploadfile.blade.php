@@ -71,6 +71,17 @@
             line-height:50px;
             text-align: center;
             }
+
+            .resultLog{
+                background-color: #f1f1f1;
+                border-radius: 5px;
+                padding: 5px;
+                border: 1px #d8d8d8 solid;
+            }
+
+            .titreBlocLog{
+                font-weight: bold;
+            }
         </style>
 
         <script lang="javascript" src="{{asset('js/jquery-3.3.1.min.js')}}"></script>
@@ -81,14 +92,14 @@
         <div class="container-fluid">
             <h1 class="display-4">OCHA Rowca Database</h1>
             <blockquote class="blockquote">
-                <p class="mb-0">Upolad Excel sheets and select which data to import.</p>
+                <p class="mb-0">Upload Excel sheets and select which data to import.</p>
             </blockquote>
             <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="pills-upload-tab" data-toggle="pill" href="#pills-upload" role="tab" aria-controls="pills-upload" aria-selected="true">Upload</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link " id="pills-select-tab" data-toggle="pill" href="#pills-select" role="tab" aria-controls="pills-select" aria-selected="false">Select data</a>
+                    <a class="nav-link disabled" id="pills-select-tab" data-toggle="pill" href="#pills-select" role="tab" aria-controls="pills-select" aria-selected="false">Select data</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link disabled" id="pills-import-tab" data-toggle="pill" href="#pills-import" role="tab" aria-controls="pills-import" aria-selected="false">Import</a>
@@ -100,9 +111,7 @@
                     Drop here
                     </div>
                     <div id='filesInfo'>
-                        <p class="font-weight-normal">Informations sur le fichier</p>
-                        <p><em>Dernier modification : test le 1245/45/45</em></p>
-                        <p><em>Feuilles : test</em></p>
+                      
                     </div>
                 </div>
                 <div class="tab-pane fade" id="pills-select" role="tabpanel" aria-labelledby="pills-select-tab">
@@ -119,7 +128,15 @@
                     </div>
                 
                 </div>
-                <div class="tab-pane fade" id="pills-import" role="tabpanel" aria-labelledby="pills-import-tab"><button type="button" onclick='launchImport()' class="btn btn-primary">Primary</button></div>
+                <div class="tab-pane fade" id="pills-import" role="tabpanel" aria-labelledby="pills-import-tab">
+                    
+                    <div class='col-12' >
+                    <button type="button" onclick='launchImport()' class="btn btn-secondary btn-lg btn-block">Launch</button>
+                    </div>
+                    <div class='col-12' id='importLog'>
+                   
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -130,6 +147,7 @@
             var indicators = null;
             var db_typeHeaders = null;
             var db_headears = null;
+            var db_disaggregations = null;
             var workbook = null;
 
             $.ajaxSetup({
@@ -139,10 +157,13 @@
             });
             
             jQuery.ajax({ url: "{{ url('/listIndcators') }}",async : false, method: 'post',data: {},success: function(result){indicators = JSON.parse(result);}});
-            jQuery.ajax({ url: "{{ url('/getTypeHeaders') }}",async : false, method: 'post',data: {},success: function(result){db_typeHeaders = JSON.parse(result);}});
+            jQuery.ajax({ url: "{{ url('/getTypeHeaders') }}",async : false, method: 'post',data: {},success: function(result){db_typeHeaders = JSON.parse(result); console.log(db_typeHeaders);}});
             jQuery.ajax({ url: "{{ url('/getHeaders') }}",async : false, method: 'post',data: {},success: function(result){db_headears = JSON.parse(result);}});
+            jQuery.ajax({ url: "{{ url('/getDisaggregations') }}",async : false, method: 'post',data: {},success: function(result){console.log(result);db_disaggregations = JSON.parse(result);}});
             //FIN
 
+           
+            
 
             //ACTIVATION DU DROP
             var drop_dom_element = document.getElementById("dropHere");
@@ -161,6 +182,7 @@
                 };
                 if(rABS) reader.readAsBinaryString(f); else reader.readAsArrayBuffer(f);
             }
+
 
             //EVENEMENTS DU DROP
             $(document).on('dragenter', '#dropHere', function() {
@@ -224,25 +246,88 @@
                                 }
                                 
                                 $("#sheet-pills-tab").append("<a class='nav-link "+buttonSheetActive+"' id='v-pills-sheet"+idSheet+"-tab' data-toggle='pill' href='#v-pills-sheet"+idSheet+"' role='tab' aria-controls='v-pills-sheet"+idSheet+"' aria-selected='"+ariaSelected+"'>"+sheetname+"</a>");
-                                $("#sheet-pills-tab").append("<input type='text' id='sheet"+idSheet+"' value='"+sheetname+"'/>");
-                                $("#sheet-pills-tabContent").append("<div class='tab-pane fade "+sheetActive+"' id='v-pills-sheet"+idSheet+"' role='tabpanel' aria-labelledby='v-pills-sheet"+idSheet+"-tab'><form><div class='form-check'><input type='checkbox' class='form-check-input checkImportSheet' id='checkImportSheet"+idSheet+"'><label class='form-check-label' for='exampleCheck1'>Importer cette feuille</label></div></form><table class='table' ><thead class='sthead-dark'><tr><th scope='col'>?</th><th scope='col'>Entete</th><th scope='col'>Type</th><th scope='col'>KeyFigure / CaseLoad</th></tr></thead><tbody></tbody></table></div>");
+                                $("#sheet-pills-tab").append("<input type='text' hidden id='sheet"+idSheet+"' value='"+sheetname+"'/>");
+                                $("#sheet-pills-tabContent").append("<div class='tab-pane fade "+sheetActive+"' id='v-pills-sheet"+idSheet+"' role='tabpanel' aria-labelledby='v-pills-sheet"+idSheet+"-tab'><form><div class='form-check btn btn-danger btn-lg btn-block' id='blocCheckSheet"+idSheet+"'><input type='checkbox' class='form-check-input checkImportSheet' id='checkImportSheet"+idSheet+"' onclick='checkImportSheet(this,\""+idSheet+"\")'><label class='form-check-label' for='exampleCheck1'>Importer cette feuille</label></div></form><table class='table' ><thead class='sthead-dark'><tr><th scope='col'>?</th><th scope='col'>Header</th><th scope='col'>Type</th><th scope='col'>Correspond to</th><th scope='col'>Is disaggregation of</th></tr></thead><tbody></tbody></table></div>");
                                 
                                 ws = workbook.Sheets[sheetname];
                                 headers = XLSX.utils.sheet_to_json(ws, {header:1})[0];
             
                                 var j;
                                 for (j = 0; j < headers.length; j++) {
-                                    $("#v-pills-sheet"+idSheet+" table tbody").append("<tr><td><div class='form-check'><input type='checkbox' class='form-check-input checkImportColomn"+idSheet+"' id='checkImportColomn"+idSheet+j+"'></div></form></td><td>"+headers[j]+"<input type='text' id='HeaderName"+idSheet+j+"' value='"+headers[j]+"'/></td><td><select class='form-control' id='headerType"+idSheet+j+"'><option value=''>Select one</option><option value='location'>Localisation</option><option value='date'>Date</option><option value='keyFigure'>Key figure / Caseload</option></select></td><td><select class='form-control' id='HeaderIndicator"+idSheet+j+"'></select></td></tr>");
+                                    content = "<tr id='line"+idSheet+j+"'>";
+                                    content += "<td><div class='form-check'><input type='checkbox' onclick='checkImport(this,\""+idSheet+j+"\")' class='form-check-input checkImportColomn"+idSheet+"' id='checkImportColomn"+idSheet+j+"'></div></form></td>";
+                                    content += "<td>"+headers[j]+"<input type='text' hidden id='HeaderName"+idSheet+j+"' value='"+headers[j]+"'/></td>";
+                                    content += "<td><select style='display:none;' class='form-control btn-danger' id='headerType"+idSheet+j+"' onchange='loadHeaderOptions(this,\""+idSheet+j+"\")'>";
+                                    
+                                    content += "</select>";
+                                    content += "</td>";
+                                    content += "<td><select style='display:none;' class='form-control btn-danger' onchange='loadDisaggregations(\""+idSheet+j+"\")' id='HeaderIndicator"+idSheet+j+"'></select></td>";
+                                    content += "<td><select style='display:none;' class='form-control btn-danger' onchange='checkDisaggregationTargetValue(\""+idSheet+j+"\")' id='disaggregationTarget"+idSheet+j+"'></select></td>";
+                                    content += "</tr>";
+
+                                    $("#v-pills-sheet"+idSheet+" table tbody").append(content);
                                     var k;
 
-                                    for (k = 0; k < indicators.length; k++) {
-                                        $("#HeaderIndicator"+idSheet+j).append(new Option(indicators[k].kfindic_caption_fr, indicators[k].kfind_id));
+                                        //console.log(db_headears);
+                                    //AFFICHAGE DES HEADERS
+                                    defaultExist = false;
+                                    optionValues = "<option value=''>Select one</option>";
+                                    for (k = 0; k < db_typeHeaders.length; k++) {
+                                        selected = '';
+                                        for (n = 0; n < db_headears.length; n++) {
+                                            console.log(db_headears[n].header_name.trim()+" : "+headers[j]+" : "+db_typeHeaders[k].type_header_code.trim());
+                                            if(
+                                                (db_headears[n].header_name.trim() == headers[j])&&
+                                                (db_headears[n].type_header_code == db_typeHeaders[k].type_header_code)){
+                                                selected = 'selected';
+                                                defaultExist =true;
+                                            }
+                                        }
+                                        optionValues += "<option "+selected+" value='"+db_typeHeaders[k].type_header_code.trim()+"'>"+db_typeHeaders[k].type_header_name.trim()+"</option>";
                                     }
+                                    $("#headerType"+idSheet+j).html(optionValues);
+                                    if(defaultExist){
+                                        $("#headerType"+idSheet+j).show();
+                                        $("#headerType"+idSheet+j).removeClass('btn-danger');
+                                        $("#line"+idSheet+j).addClass('table-success');
+                                        $("#checkImportColomn"+idSheet+j).prop("checked", true);
+                                    }
+
+
+                                    //AFFICHAGE DES INDICATEURS
+                                    defaultExist = false;
+                                    optionValues = "<option value=''>Select one</option>";
+                                    for (k = 0; k < indicators.length; k++) {
+                                        selected = '';
+                                        for (n = 0; n < db_headears.length; n++) {
+                                            if(
+                                                (db_headears[n].header_name.trim() == headers[j])&&
+                                                (db_headears[n].kfind_id == indicators[k].kfind_id)){
+                                                selected = 'selected';
+                                                defaultExist = true;
+                                            }
+                                        }
+                                        optionValues += "<option "+selected+" value='"+indicators[k].kfind_id+"'>"+indicators[k].kfindic_caption_fr+"</option>";
+                                    }
+                                    $("#HeaderIndicator"+idSheet+j).html(optionValues);
+                                    if(defaultExist){
+                                        $("#HeaderIndicator"+idSheet+j).show();
+                                        $("#HeaderIndicator"+idSheet+j).removeClass('btn-danger');
+                                    }
+
+
+                                    //AFFICHAGE DES DISAGGREGATIONS TARGET
+                                    optionValues = "<option value=''>Select one</option>";
+                                    for (k = 0; k < headers.length; k++) {
+                                        selected = '';
+                                        optionValues += "<option "+selected+" value='"+headers[k]+"'>"+headers[k]+"</option>";
+                                    }
+                                    $("#disaggregationTarget"+idSheet+j).html(optionValues);
                                 }
 
                                 idSheet++;
                             });
-/*
+                            /*
                             //RECHERCHE DES HEADERS DANS LES INDICATEURS
                             var jqxhr = $.post( "example.php", function() {
                             alert( "success" );
@@ -256,7 +341,7 @@
                             .always(function() {
                                 alert( "finished" );
                             });
-*/
+                            */
                             /* DO SOMETHING WITH workbook HERE */
                         };
                         if(rABS) reader.readAsBinaryString(f); else reader.readAsArrayBuffer(f);
@@ -267,8 +352,113 @@
                 }
                 return false;
             });
-
             
+            function checkImport(checkbox,index){
+                //var ckbox = $('#checkImportColomn'+index);
+                
+                console.log("show:"+"#headerType"+index);
+                if ($(checkbox).is(':checked')) {
+                    $("#headerType"+index).show();
+                    $("#line"+index).addClass("table-success");
+
+                } else {
+                    $("#headerType"+index).hide();
+                    $("#HeaderIndicator"+index).hide();
+                    $("#disaggregationTarget"+index).hide();
+                    $("#line"+index).removeClass("table-success");
+                }
+        
+                $("#headerType"+index+"").val('');
+                $("#HeaderIndicator"+index+"").val('');
+                $("#disaggregationTarget"+index+"").val('');
+            }
+
+            function checkImportSheet(checkbox,index){
+                
+                if ($(checkbox).is(':checked')) {
+                    $("#blocCheckSheet"+index).removeClass("btn-danger");
+                    $("#blocCheckSheet"+index).addClass("btn-success");
+                } else {
+                    $("#blocCheckSheet"+index).removeClass("btn-success");
+                    $("#blocCheckSheet"+index).addClass("btn-danger");
+                }
+            }
+            
+            function loadHeaderOptions(SelectOption, index){
+                optionValues = "<option value=''>Select one</option>";
+                $("#headerType"+index).removeClass("btn-danger");
+                $("#HeaderIndicator"+index).addClass("btn-danger");
+                $("#disaggregationTarget"+index+"").hide();
+                switch(SelectOption.value){
+                    case 'location':
+                        optionValues+="<option value='pcodeAdmin0'>Pcode iso3 Admin0</option>";
+                        optionValues+="<option value='pcodeAdmin1'>Pcode iso3 Admin1</option>";
+                        optionValues+="<option value='pcodeAdmin2'>Pcode iso3 Admin2</option>";
+                        optionValues+="<option value='pcodeAdmin3'>Pcode iso3 Admin3</option>";
+                        optionValues+="<option value='pcodeAdmin4'>Pcode iso3 Admin4</option>";
+                        optionValues+="<option value='pcodeAdmin5'>Pcode iso3 Admin5</option>";
+                        optionValues+="<option value='labelAdmin0'>Label Admin0</option>";
+                        optionValues+="<option value='labelAdmin1'>Label Admin1</option>";
+                        optionValues+="<option value='labelAdmin2'>Label Admin2</option>";
+                        optionValues+="<option value='labelAdmin3'>Label Admin3</option>";
+                        optionValues+="<option value='labelAdmin4'>Label Admin4</option>";
+                        optionValues+="<option value='labelAdmin5'>Label Admin5</option>";
+                    break;
+                    case 'date':
+                        optionValues+="<option value='AAAA'>Année</option>";
+                        optionValues+="<option value='AAAA-MM-DD'>Année-Mois-Jour</option>";
+                        optionValues+="<option value='DD-MM-AAAA'>Jour-Mois-Année</option>";
+                    break;
+                    case 'keyFigure':
+                        console.log(indicators);
+                        for (k = 0; k < indicators.length; k++) {
+                            optionValues+="<option value='"+indicators[k].kfind_id+"'>"+indicators[k].kfindic_caption_fr+"</option>";
+                        }
+                    case 'disaggregation':
+                        for (k = 0; k < db_disaggregations.length; k++) {
+                            optionValues+="<option value='"+db_disaggregations[k].id_disaggregation+"'>"+db_disaggregations[k].label_disaggregation+"</option>";
+                        }
+                    break;
+                }
+
+                if(SelectOption.value==''){
+                    $("#headerType"+index).addClass("btn-danger");
+                    $("#HeaderIndicator"+index).hide();
+                }else{
+                    $("#HeaderIndicator"+index).html(optionValues);
+                    $("#HeaderIndicator"+index).show();
+                }
+            }
+            
+            function checkDisaggregationTargetValue(index){
+                if($("#disaggregationTarget"+index).val()==''){
+                    $("#disaggregationTarget"+index).addClass("btn-danger");
+                }else{
+                    $("#disaggregationTarget"+index).removeClass("btn-danger");
+                }
+            }
+            
+            function loadDisaggregations(index){
+                $("#disaggregationTarget"+index+"").val('');
+                $("#disaggregationTarget"+index).addClass("btn-danger");
+
+                if($("#headerType"+index).val()=="disaggregation"){
+                    if($("#HeaderIndicator"+index).val()==''){
+                        $("#disaggregationTarget"+index+"").hide();
+                        $("#HeaderIndicator"+index).addClass("btn-danger");
+                    }else{
+                        $("#HeaderIndicator"+index).removeClass("btn-danger");
+                        $("#disaggregationTarget"+index+"").show();
+                    }
+                }else{
+                    if($("#HeaderIndicator"+index).val()==''){
+                        $("#HeaderIndicator"+index).addClass("btn-danger");
+                    }else{
+                        $("#HeaderIndicator"+index).removeClass("btn-danger");
+                    }
+                    $("#disaggregationTarget"+index).hide();
+                }
+            }
 
             function upload(files) {
                         var f = files[0] ;
@@ -289,15 +479,20 @@
                         reader.readAsDataURL(f);            
             }
 
-            function launchImport(){
+            function launchImport(fileInfo){
                 idSheet = 0;
                 ImportSheets = [];
+                error = false;
+                error_message = "</br>";
+
                 $( ".checkImportSheet" ).each(function(l, sheet) {
                     if($(sheet).is(':checked')){
                         feuille = $("#sheet"+idSheet+"").val();
                         sheetData = null;
                         importInfo = [];
                         sheetInfo = [];
+                        locationExist = false;
+                        KeyFigureExist = false;
 
                         ws = workbook.Sheets[feuille];
                         sheetData = XLSX.utils.sheet_to_json(ws, {header:1});
@@ -307,18 +502,58 @@
                             if($(column).is(':checked')){
                                 headerName = $("#HeaderName"+idSheet+idColumn+"").val();
                                 headerIndex = idColumn;
+
                                 headerType = $("#headerType"+idSheet+idColumn+"").val();
+                                if(headerType==''){
+                                    error = true;
+                                    error_message += "<div class='alert alert-danger' role='alert'>Select a <span class='font-weight-bold'>type</span> for <span class='font-weight-bold'>\""+headerName+"\"</span> on the sheet <span class='font-weight-bold'>\""+feuille+"\"</span></div>";
+                                }else{
+                                    switch(headerType){
+                                        case"location":
+                                            locationExist = true;
+                                        break;
+                                        case"keyFigure":
+                                            KeyFigureExist = true;
+                                        break;
+                                    }
+                                }
+
                                 HeaderIndicator = $("#HeaderIndicator"+idSheet+idColumn+"").val();
+                                if(HeaderIndicator==''){
+                                    error = true;
+                                    error_message += "<div class='alert alert-danger' role='alert'>Select a <span class='font-weight-bold'>correspondence</span> for <span class='font-weight-bold'>\""+headerName+"\"</span> on the sheet <span class='font-weight-bold'>\""+feuille+"\"</span></div>";
+                                }
+
+                                disaggregationTarget = $("#disaggregationTarget"+idSheet+idColumn+"").val();
+                                if(headerType=='disaggregation'){
+                                    if(disaggregationTarget==''){
+                                        error = true;
+                                        error_message += "<div class='alert alert-danger' role='alert'>Select a <span class='font-weight-bold'>disaggregation</span> for<span class='font-weight-bold'> \""+headerName+"\"</span> on the sheet <span class='font-weight-bold'>\""+feuille+"\"</span></div>";
+                                    }
+                                }
+                                
 
                                 headerInfo = [];
                                 headerInfo.push({headerName,headerName});
                                 headerInfo.push({headerIndex,headerIndex});
                                 headerInfo.push({headerType, headerType});
                                 headerInfo.push({HeaderIndicator,HeaderIndicator});
+                                headerInfo.push({disaggregationTarget,disaggregationTarget});
                                 importInfo.push({headerInfo,headerInfo});
                             }
                             idColumn++;
                         });
+
+
+                        if(locationExist==false){
+                            error = true;
+                            error_message += "<div class='alert alert-danger' role='alert'>Select at least one <span class='font-weight-bold'>location</span> on the sheet <span class='font-weight-bold'>\""+feuille+"\"</span></div>";
+                        }
+                        
+                        if(KeyFigureExist==false){
+                            error = true;
+                            error_message += "<div class='alert alert-danger' role='alert'>Select at least one <span class='font-weight-bold'>Key figure</span> on the sheet <span class='font-weight-bold'>\""+feuille+"\"</span></div>";
+                        }
 
                         sheetInfo.push({feuille, feuille});
                         sheetInfo.push({importInfo,importInfo});
@@ -329,11 +564,51 @@
                     idSheet++;
                 });
 
-                console.log("prepartation import");
-                jQuery.ajax({ url: "{{ url('/importData') }}",async : false, method: 'post',data: {import:ImportSheets },success: function(result){
-                    console.log(result);
-                }});
-            
+                console.log("prépartation import");
+
+
+                if(ImportSheets.length != 0){
+                    if(ImportSheets[0]['sheetInfo'][1]['importInfo']. length != 0){
+                        if(error){
+                            $("#importLog").html(error_message);
+                        }else{
+                            jQuery.ajax({ url: "{{ url('/importData') }}",async : false, method: 'post',data: {import:ImportSheets,fileInfo:fileInfo },success: function(result){
+                                console.log(result);
+                                log = "</br>";
+                                if(result[0]['importLog']){
+                                    log+="<div class='alert alert-success' role='alert'>Data imported successfully</div>";
+                                }else{
+                                    log+="<div class='alert alert-danger' role='alert'>An error accured, contact the Administrator</div>";
+                                }
+
+                                log+="<div class='resultLog'>"+result[0]['importLog']+"</div>";
+                                $("#importLog").html(log);
+                            }}).fail(function(jqXHR, textStatus) {
+                                error = "</br><div class='alert alert-danger' role='alert'>An error occured, contact the administrator</div></br>";
+                                error += "<samp>";
+                                error += "Status code : <span class='text-danger'> "+jqXHR.status+"</span></br>";
+                                if(jqXHR.responseJSON != undefined){
+                                    error += "Exception : "+jqXHR.responseJSON.exception+"</br>";
+                                    error += "File : "+jqXHR.responseJSON.file+"</br>";
+                                    error += "Message : <p <span class='text-danger'>"+jqXHR.responseJSON.message+"</p></br></br>";
+                                }
+                                if(jqXHR.responseText != undefined){
+                                    error += "responseText : "+jqXHR.responseText+"</br>";
+                                }
+                                
+                                
+                                
+                                $("#importLog").html(error);
+                            });
+                        }
+                        
+                    }else{
+                        $("#importLog").html("</br><div class='alert alert-danger' role='alert'>You haven't checked a field! Please check one or multiple fields on a sheet to import and try again</div>");
+                    }
+                    
+                }else{
+                    $("#importLog").html("</br><div class='alert alert-danger' role='alert'>No sheet selected! Please choose a sheet to import and try again</div>");
+                }
             }
 
             function handleReaderLoad(evt) {

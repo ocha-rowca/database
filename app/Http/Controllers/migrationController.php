@@ -28,11 +28,20 @@ class migrationController extends Controller
         DB::table('disaggregations')->delete();
         DB::table('type_disaggregations')->delete();
         DB::table('kf_reports')->delete();
+        DB::table('headers')->delete();
+        DB::table('report_year_trends')->delete();
+        DB::table('recalculated_reports')->delete();
         DB::table('kf_indicators')->delete();
         DB::table('kf_subcategories')->delete();
         DB::table('kf_categs')->delete();
         
+        DB::table('emergency_locations')->delete();
+        DB::table('ftsflow_dest_locations')->delete();
+        DB::table('ftsflow_from_locations')->delete();
+        DB::table('plan_locations')->delete();
+        DB::table('location_others')->delete();
         DB::table('locations')->delete();
+        
         DB::table('location_types')->delete();
 
         // kf_category
@@ -85,6 +94,7 @@ class migrationController extends Controller
                 $kf_indicator->kfsubcategory_id = $element->KeyFigureSubCategoryId;
                 $kf_indicator->kfindic_caption_fr = "";
                 $kf_indicator->kfindic_caption_en = $element->KeyFigureIndicator;
+                $kf_indicator->id_method = "1";
                 $kf_indicator->save();
             }else{
                 $object->kfindic_caption_fr = utf8_encode($element->KeyFigureIndicator);
@@ -135,7 +145,7 @@ class migrationController extends Controller
         $orsDatas = DB::connection('mysql2')->select("SELECT kfrd.KeyFigureReportDetailId, kfrd.KeyFigureReportId, kfrd.LocationId, kfr.KeyFigureIndicatorId, kfrd.TotalTotal, kfrd.TotalMen, kfrd.TotalWomen, kfrd.NeedTotal, kfrd.NeedMen, kfrd.NeedWomen, kfrd.TargetedTotal, kfrd.TargetedMen, kfrd.TargetedWomen, kfrd.FromLocation, kfrd.KeyFigureSource, kfr.KeyFigureReportedDate FROM keyfigurereportdetails kfrd left join keyfigurereports kfr on kfr.KeyFigureReportId = kfrd.KeyFigureReportId");
         
         //create type_disaggregation
-        $idypeDisag=date('YmdHis').rand (0, 9999);
+        $idypeDisag=date('YmdHis').rand (0, 9999)."i";
         $type_disaggregation = new type_disaggregation;
         $type_disaggregation->id_type_disaggregation = $idypeDisag;
         $type_disaggregation->label_type_disaggregation = "Sexe";
@@ -143,14 +153,14 @@ class migrationController extends Controller
 
 
         //create disaggregation
-        $idDisagHomme=date('YmdHis').rand (0, 9999);
+        $idDisagHomme=date('YmdHis').rand (0, 9999)."i";
         $disaggregation = new disaggregation;
         $disaggregation->id_disaggregation = $idDisagHomme;
         $disaggregation->id_type_disaggregation = $idypeDisag;
         $disaggregation->label_disaggregation = "Homme";
         $disaggregation->save();
 
-        $idDisagFemme=date('YmdHis').rand (0, 9999);
+        $idDisagFemme=date('YmdHis').rand (0, 9999)."i";
         $disaggregation = new disaggregation;
         $disaggregation->id_disaggregation = $idDisagFemme;
         $disaggregation->id_type_disaggregation = $idypeDisag;
@@ -171,7 +181,7 @@ class migrationController extends Controller
             }
 
             //Disaggregations
-            $id=date('YmdHis').rand (0, 9999);
+            $id=date('YmdHis').rand (0, 9999)."i";
 
             //kf_report
             if(!$object){
@@ -186,7 +196,7 @@ class migrationController extends Controller
 
                 //add disaggregation Homme
                 if($element->TotalMen!=NULL){
-                    $idDisag=date('YmdHis').rand (0, 9999);
+                    $idDisag=date('YmdHis').rand (0, 9999)."i";
                     $kf_disag = new kf_disag;
                     $kf_disag->kfreport_id = $element->KeyFigureReportId;
                     $kf_disag->id_disaggregation = $idDisagHomme;
@@ -198,7 +208,7 @@ class migrationController extends Controller
 
                 //add disaggregation Femme
                 if($element->TotalWomen!=NULL){
-                    $idDisag=date('YmdHis').rand (0, 9999);
+                    $idDisag=date('YmdHis').rand (0, 9999)."i";
                     $kf_disag = new kf_disag;
                     $kf_disag->kfreport_id = $element->KeyFigureReportId;
                     $kf_disag->id_disaggregation = $idDisagFemme;

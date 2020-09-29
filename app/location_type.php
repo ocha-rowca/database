@@ -8,4 +8,5 @@ class location_type extends Model
 {
     //
     protected $primaryKey = 'locationtype_id';
+    public $incrementing = false;
 }

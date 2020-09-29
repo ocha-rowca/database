@@ -8,5 +8,6 @@ class location extends Model
 {
     //
     protected $primaryKey = 'location_id';
+    public $incrementing = false;
     
 }

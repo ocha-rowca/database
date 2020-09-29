@@ -11,4 +11,5 @@ class keyfigurecategorydetail extends Model
 {
     //
     protected $connection = 'mysql2';
+    
 }

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\kf_indicator as kf_indicator;
 use App\type_header as type_header;
 use App\header as header;
+use App\disaggregation as disaggregation;
 
 class QueryDatabaseController extends Controller
 {
@@ -23,7 +24,17 @@ class QueryDatabaseController extends Controller
 
 
     public function getHeaders(){
-        $headers = header::all();
+        $headers = DB::table('headers')
+            ->join('type_headers', 'headers.type_header_id', '=', 'type_headers.type_header_id')
+            ->select('headers.*', 'type_headers.type_header_name', 'type_headers.type_header_code')
+            ->get();
+        //$headers = header::all();
         return $headers->toJson();
+    }
+
+
+    public function getDisaggregations(){
+        $disaggregations = disaggregation::all();
+        return $disaggregations->toJson();
     }
 }

@@ -8,4 +8,5 @@ class file extends Model
 {
     //
     protected $primaryKey = 'file_id';
+    public $incrementing = false;
 }

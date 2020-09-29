@@ -8,4 +8,5 @@ class type_header extends Model
 {
     //
     protected $primaryKey = 'type_header_id';
+    public $incrementing = false;
 }

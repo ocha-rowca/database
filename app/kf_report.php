@@ -8,4 +8,5 @@ class kf_report extends Model
 {
     //
     protected $primaryKey = 'kfreport_id';
+    public $incrementing = false;
 }

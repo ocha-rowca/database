@@ -8,4 +8,5 @@ class kf_indicator extends Model
 {
     //
     protected $primaryKey = 'kfind_id';
+    public $incrementing = false;
 }

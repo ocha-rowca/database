@@ -8,4 +8,5 @@ class kf_category extends Model
 {
     //
     protected $connection = 'mysql2';
+ 
 }
